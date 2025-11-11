@@ -1,0 +1,5 @@
+{
+  "name": "MBF System",
+  "description": "A booking and management system for physiotherapists. It features a calendar, client management, services, invoicing, statistics, settings, and an app marketplace.",
+  "requestFramePermissions": []
+}
