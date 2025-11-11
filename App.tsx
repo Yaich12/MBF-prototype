@@ -8,13 +8,15 @@ import InvoicesPage from './pages/InvoicesPage';
 import StatisticsPage from './pages/StatisticsPage';
 import SettingsPage from './pages/SettingsPage';
 import AppsPage from './pages/AppsPage';
-import { Page, Client } from './types';
+import { Page, Client, Appointment } from './types';
 import ClientDetailPage from './pages/ClientDetailPage';
 
 const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>(Page.Calendar);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [calendarInitialDate, setCalendarInitialDate] = useState<Date | null>(null);
 
   const handleAddClient = (clientData: Omit<Client, 'id' | 'status'>) => {
       const newClient: Client = {
@@ -33,13 +35,40 @@ const App: React.FC = () => {
     setSelectedClient(null);
   }
 
+  const handleNavigateToCalendar = (date: Date) => {
+    setCalendarInitialDate(date);
+    setActivePage(Page.Calendar);
+  }
+
+  const handleAddAppointment = (appointmentData: Omit<Appointment, 'id'>) => {
+    const newAppointment: Appointment = {
+      id: new Date().toISOString() + Math.random(),
+      ...appointmentData
+    };
+    setAppointments(prev => [...prev, newAppointment]);
+  };
+
   const renderPage = () => {
     switch (activePage) {
       case Page.Calendar:
-        return <CalendarPage />;
+        return (
+          <CalendarPage 
+            appointments={appointments} 
+            onAddAppointment={handleAddAppointment}
+            initialDate={calendarInitialDate}
+            onDateSet={() => setCalendarInitialDate(null)}
+          />
+        );
       case Page.Clients:
         if (selectedClient) {
-          return <ClientDetailPage client={selectedClient} onBack={handleBackToClients} />;
+          return (
+            <ClientDetailPage 
+              client={selectedClient} 
+              onBack={handleBackToClients}
+              appointments={appointments}
+              onNavigateToCalendar={handleNavigateToCalendar}
+            />
+          );
         }
         return <ClientsPage clients={clients} onAddClient={handleAddClient} onClientSelect={handleClientSelect} />;
       case Page.Services:

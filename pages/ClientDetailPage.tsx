@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Client } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Client, Appointment } from '../types';
 import { 
     TrashIcon, 
     PencilIcon,
@@ -21,9 +21,11 @@ import {
 interface ClientDetailPageProps {
     client: Client;
     onBack: () => void;
+    appointments: Appointment[];
+    onNavigateToCalendar: (date: Date) => void;
 }
 
-const ClientDetailPage: React.FC<ClientDetailPageProps> = ({ client, onBack }) => {
+const ClientDetailPage: React.FC<ClientDetailPageProps> = ({ client, onBack, appointments, onNavigateToCalendar }) => {
     const [activeTab, setActiveTab] = useState('Journal');
     const tabs = ['Journal', 'Begivenheder', 'Aftaler', 'Fakturaer'];
 
@@ -33,6 +35,31 @@ const ClientDetailPage: React.FC<ClientDetailPageProps> = ({ client, onBack }) =
         title: 'Migræne',
         date: '11. november 2025',
         notes: 'Han tænker for meget. / diagnoseret kronisk skeptisk fra alder af 16 år'
+    };
+
+    // Filter appointments for this client
+    const clientAppointments = useMemo(() => {
+        return appointments.filter(app => app.client === client.name);
+    }, [appointments, client.name]);
+
+    // Sort appointments by date (newest first)
+    const sortedAppointments = useMemo(() => {
+        return [...clientAppointments].sort((a, b) => {
+            return b.date.getTime() - a.date.getTime();
+        });
+    }, [clientAppointments]);
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString('da-DK', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const formatTime = (time: string) => {
+        return time;
     };
     
     return (
@@ -137,7 +164,47 @@ const ClientDetailPage: React.FC<ClientDetailPageProps> = ({ client, onBack }) =
                                 </div>
                             </div>
                         )}
-                        {activeTab !== 'Journal' && (
+                        {activeTab === 'Begivenheder' && (
+                            <div className="p-6">
+                                {sortedAppointments.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-500">
+                                        <p>Ingen aftaler fundet for denne klient.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {sortedAppointments.map(appointment => (
+                                            <div
+                                                key={appointment.id}
+                                                onClick={() => onNavigateToCalendar(appointment.date)}
+                                                className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-3 mb-2">
+                                                            <h4 className="font-semibold text-gray-800">{appointment.service}</h4>
+                                                            <span className="text-sm text-gray-500">
+                                                                {formatDate(appointment.date)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                                            <span className="flex items-center">
+                                                                <ClockIcon className="w-4 h-4 mr-1" />
+                                                                {formatTime(appointment.startTime)} ({appointment.duration} min)
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div 
+                                                        className="w-4 h-4 rounded"
+                                                        style={{ backgroundColor: appointment.color }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {activeTab !== 'Journal' && activeTab !== 'Begivenheder' && (
                              <div className="p-6 text-center text-gray-500">Indhold for {activeTab} kommer snart.</div>
                         )}
                     </div>

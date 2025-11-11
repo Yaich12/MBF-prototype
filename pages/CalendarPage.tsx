@@ -1,6 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, DotsHorizontalIcon, PlusIcon, XIcon } from '../components/icons';
 import { Appointment } from '../types';
+
+interface CalendarPageProps {
+    appointments: Appointment[];
+    onAddAppointment: (appointment: Omit<Appointment, 'id'>) => void;
+    initialDate?: Date | null;
+    onDateSet?: () => void;
+}
 
 interface AppointmentModalProps {
     onClose: () => void;
@@ -188,18 +195,22 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ onClose, onAddAppoi
 };
 
 
-const CalendarPage: React.FC = () => {
+const CalendarPage: React.FC<CalendarPageProps> = ({ appointments, onAddAppointment, initialDate, onDateSet }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [currentDate, setCurrentDate] = useState(initialDate || new Date());
 
-    const handleAddAppointment = (appointmentData: Omit<Appointment, 'id'>) => {
-        const newAppointment: Appointment = {
-            id: new Date().toISOString() + Math.random(),
-            ...appointmentData
-        };
-        setAppointments(prev => [...prev, newAppointment]);
-    };
+    useEffect(() => {
+        if (initialDate) {
+            setCurrentDate(initialDate);
+            // Reset initialDate after it's been processed
+            if (onDateSet) {
+                // Use setTimeout to ensure the date is set before resetting
+                setTimeout(() => {
+                    onDateSet();
+                }, 0);
+            }
+        }
+    }, [initialDate, onDateSet]);
 
     const getWeekStartDate = (date: Date) => {
         const d = new Date(date);
@@ -269,7 +280,7 @@ const CalendarPage: React.FC = () => {
 
     return (
     <div className="flex flex-col h-full bg-white">
-        {isModalOpen && <AppointmentModal onClose={() => setIsModalOpen(false)} onAddAppointment={handleAddAppointment} />}
+        {isModalOpen && <AppointmentModal onClose={() => setIsModalOpen(false)} onAddAppointment={onAddAppointment} />}
         <header className="flex items-center justify-between p-4 border-b border-gray-200">
             <div className="flex items-center space-x-4">
                 <div className="flex items-center border rounded-md">
