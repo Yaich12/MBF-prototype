@@ -82,7 +82,14 @@ const App: React.FC = () => {
       case Page.Apps:
         return <AppsPage />;
       default:
-        return <CalendarPage />;
+        return (
+          <CalendarPage 
+            appointments={appointments} 
+            onAddAppointment={handleAddAppointment}
+            initialDate={calendarInitialDate}
+            onDateSet={() => setCalendarInitialDate(null)}
+          />
+        );
     }
   };
 
