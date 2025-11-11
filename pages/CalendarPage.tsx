@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, DotsHorizontalIcon, PlusIcon, XIcon } from '../components/icons';
 import { Appointment } from '../types';
 
@@ -188,17 +188,30 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({ onClose, onAddAppoi
 };
 
 
-const CalendarPage: React.FC = () => {
+interface CalendarPageProps {
+    appointments: Appointment[];
+    onAddAppointment: (appointment: Omit<Appointment, 'id'>) => void;
+    focusedDate: Date;
+    onChangeFocusedDate: (date: Date) => void;
+}
+
+
+const CalendarPage: React.FC<CalendarPageProps> = ({ appointments, onAddAppointment, focusedDate, onChangeFocusedDate }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [currentDate, setCurrentDate] = useState<Date>(focusedDate);
+
+    useEffect(() => {
+        if (currentDate.getTime() !== focusedDate.getTime()) {
+            setCurrentDate(focusedDate);
+        }
+    }, [focusedDate, currentDate]);
 
     const handleAddAppointment = (appointmentData: Omit<Appointment, 'id'>) => {
-        const newAppointment: Appointment = {
-            id: new Date().toISOString() + Math.random(),
-            ...appointmentData
-        };
-        setAppointments(prev => [...prev, newAppointment]);
+        onAddAppointment(appointmentData);
+        const normalizedDate = new Date(appointmentData.date);
+        normalizedDate.setHours(0, 0, 0, 0);
+        setCurrentDate(normalizedDate);
+        onChangeFocusedDate(normalizedDate);
     };
 
     const getWeekStartDate = (date: Date) => {
@@ -232,23 +245,26 @@ const CalendarPage: React.FC = () => {
     }, [weekDays]);
 
     const handlePrevWeek = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setDate(prev.getDate() - 7);
-            return newDate;
-        });
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() - 7);
+        newDate.setHours(0, 0, 0, 0);
+        setCurrentDate(newDate);
+        onChangeFocusedDate(newDate);
     };
     
     const handleNextWeek = () => {
-         setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setDate(prev.getDate() + 7);
-            return newDate;
-        });
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() + 7);
+        newDate.setHours(0, 0, 0, 0);
+        setCurrentDate(newDate);
+        onChangeFocusedDate(newDate);
     };
     
     const handleToday = () => {
-        setCurrentDate(new Date());
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        setCurrentDate(today);
+        onChangeFocusedDate(today);
     }
 
     const hours = Array.from({ length: 9 }, (_, i) => `${9 + i}:00`);
